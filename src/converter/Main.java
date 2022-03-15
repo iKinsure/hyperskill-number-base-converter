@@ -2,12 +2,8 @@ package converter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Main {
 
@@ -21,6 +17,7 @@ public class Main {
         String input, result;
 
         while (true) {
+
             System.out.println("Enter two numbers in format: {source base} {target base} (To quit type /exit) ");
             input = scanner.nextLine();
 
@@ -43,19 +40,16 @@ public class Main {
                 }
 
                 result = input.contains(".")
-                        ? toBase(fromBase(input, fromBase), toBase)
+                        ? decimalToBase(decimalFromBase(input, fromBase), toBase)
                         : new BigInteger(input, fromBase).toString(toBase);
-
                 System.out.println("Conversion result: " + result);
-
             }
         }
     }
 
-    private static String toBase(String number, int toBase) {
+    private static String decimalToBase(String number, int toBase) {
         String newNumber = new BigDecimal(number)
                 .multiply(BigDecimal.valueOf(Math.pow(toBase, PRECISION)))
-                .setScale(PRECISION, RoundingMode.HALF_UP)
                 .toBigInteger()
                 .toString(toBase);
         return new StringBuilder(newNumber)
@@ -63,7 +57,7 @@ public class Main {
                 .toString();
     }
 
-    private static String fromBase(String number, int fromBase) {
+    private static String decimalFromBase(String number, int fromBase) {
         AtomicInteger power = new AtomicInteger(number.indexOf('.') - 1);
         return number.chars()
                 .filter(c -> c != '.')
@@ -71,7 +65,7 @@ public class Main {
                 .mapToObj(i -> new BigDecimal(i)
                         .multiply(BigDecimal.valueOf(Math.pow(fromBase, power.getAndDecrement()))))
                 .reduce(BigDecimal::add)
-                .orElseThrow(IllegalStateException::new)
+                .orElse(BigDecimal.ONE)
                 .toString();
     }
 
