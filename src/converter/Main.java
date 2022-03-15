@@ -2,6 +2,7 @@ package converter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,28 +18,21 @@ public class Main {
         String input, result;
 
         while (true) {
-
             System.out.println("Enter two numbers in format: {source base} {target base} (To quit type /exit) ");
             input = scanner.nextLine();
-
             if ("/exit".equals(input)) {
                 break;
             }
-
             data = input.split("\\s");
             fromBase = Integer.parseInt(data[0]);
             toBase = Integer.parseInt(data[1]);
-
             while (true) {
-
                 System.out.printf("Enter number in base %d to convert to base %d "
                         + "(To go back type /back) %n", fromBase, toBase);
                 input = scanner.nextLine();
-
                 if ("/back".equals(input)) {
                     break;
                 }
-
                 result = input.contains(".")
                         ? decimalToBase(decimalFromBase(input, fromBase), toBase)
                         : new BigInteger(input, fromBase).toString(toBase);
@@ -50,6 +44,7 @@ public class Main {
     private static String decimalToBase(String number, int toBase) {
         String newNumber = new BigDecimal(number)
                 .multiply(BigDecimal.valueOf(Math.pow(toBase, PRECISION)))
+                .setScale(PRECISION, RoundingMode.HALF_UP)
                 .toBigInteger()
                 .toString(toBase);
         return new StringBuilder(newNumber)
@@ -68,5 +63,4 @@ public class Main {
                 .orElse(BigDecimal.ONE)
                 .toString();
     }
-
 }
