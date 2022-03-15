@@ -1,39 +1,78 @@
 package converter;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
+    private static final int PRECISION = 5;
 
     public static void main(String[] args) {
+
+        String[] data;
+        int fromBase, toBase;
+        String input, result;
+
         while (true) {
             System.out.println("Enter two numbers in format: {source base} {target base} (To quit type /exit) ");
-            var input = scanner.nextLine();
+            input = scanner.nextLine();
 
             if ("/exit".equals(input)) {
                 break;
             }
 
-            String[] data = input.split("\\s");
-
+            data = input.split("\\s");
+            fromBase = Integer.parseInt(data[0]);
+            toBase = Integer.parseInt(data[1]);
 
             while (true) {
 
-                System.out.printf("Enter number in base %s to convert to base %s "
-                        + "(To go back type /back) %n", data[0], data[1]);
+                System.out.printf("Enter number in base %d to convert to base %d "
+                        + "(To go back type /back) %n", fromBase, toBase);
+                input = scanner.nextLine();
 
-                var number = scanner.nextLine();
-
-                if ("/back".equals(number)) {
+                if ("/back".equals(input)) {
                     break;
                 }
 
-                var result = new BigInteger(number, Integer.parseInt(data[0])).toString(Integer.parseInt(data[1]));
+                result = input.contains(".")
+                        ? toBase(fromBase(input, fromBase), toBase)
+                        : new BigInteger(input, fromBase).toString(toBase);
+
                 System.out.println("Conversion result: " + result);
 
             }
         }
     }
+
+    private static String toBase(String number, int toBase) {
+        String newNumber = new BigDecimal(number)
+                .multiply(BigDecimal.valueOf(Math.pow(toBase, PRECISION)))
+                .setScale(PRECISION, RoundingMode.HALF_UP)
+                .toBigInteger()
+                .toString(toBase);
+        return new StringBuilder(newNumber)
+                .insert(newNumber.length() - PRECISION, newNumber.startsWith(".") ? "0." : ".")
+                .toString();
+    }
+
+    private static String fromBase(String number, int fromBase) {
+        AtomicInteger power = new AtomicInteger(number.indexOf('.') - 1);
+        return number.chars()
+                .filter(c -> c != '.')
+                .map(Character::getNumericValue)
+                .mapToObj(i -> new BigDecimal(i)
+                        .multiply(BigDecimal.valueOf(Math.pow(fromBase, power.getAndDecrement()))))
+                .reduce(BigDecimal::add)
+                .orElseThrow(IllegalStateException::new)
+                .toString();
+    }
+
 }
